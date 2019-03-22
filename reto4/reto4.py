@@ -5,6 +5,8 @@ INPUT_FILE = "input.txt"
 # Functions:
 def main():
     asgardian_family = parse_input()
+    asgardian_family.purge_according_to_powerful_offspring()
+    asgardian_family.purge_according_to_powerful_parent()
 
     print(asgardian_family)
 
@@ -64,15 +66,75 @@ class FamilyTree:
     def add_relationship(self, relationship):
         self.relationships[relationship.parent].append(relationship)
 
+    def children_of(self, member_name):
+        """
+        Return list of members one parent of whom is 'member_name'.
+
+        :param member_name: name of parent whose children we seek, as string.
+        :return: list of Asgardian objects.
+        """
+        for relationship in self.relationships[member_name]:
+            yield self.members[relationship.offspring]
+
+    def children_names_of(self, member_name):
+        """
+        Return list of members one parent of whom is 'member_name'.
+
+        :param member_name: name of parent whose children we seek, as string.
+        :return: list of names, as strings.
+        """
+
+        return [c.name for c in self.children_of(member_name)]
+
+    def parents_of(self, member_name):
+        """
+        Return list of parents of 'member_name', or empty list if none known.
+
+        :param member_name: name of offspring whose parents we seek.
+        :return: list of Asgardian objects (empty if none found).
+        """
+        for parent_name, parent in self.members.items():
+            for relationship in self.relationships[parent_name]:
+                if relationship.offspring == member_name:
+                    yield parent
+
+    def parent_names_of(self, member_name):
+        """
+        Return list of parents of 'member_name', or empty list if none known.
+
+        :param member_name: name of offspring whose parents we seek.
+        :return: list names, as strings (empty if none found).
+        """
+
+        return [p.name for p in self.parents_of(member_name)]
+
+    def purge_according_to_powerful_offspring(self):
+        """Remove AA genotype from parents whose children do have the power."""
+
+        for name, member in self.members.items():
+            for child in self.children_of(name):
+                if child.has_power:
+                    member.genotypes["AA"] = False
+                    break
+
+    def purge_according_to_powerful_parent(self):
+        """Remove AA genotype from offspring whose parents do have the power."""
+
+        for name, member in self.members.items():
+            for parent in self.parents_of(name):
+                if parent.has_power:
+                    member.genotypes["AA"] = False
+
     # Special methods:
     def __str__(self):
         output_lines = []
         for name, member in self.members.items():
-            children = [r.offspring for r in self.relationships[name]]
+            children = self.children_names_of(name)
             if children:
                 line = "{m}, parent of {c}".format(m=member, c=", ".join(children))
             else:
                 line = "{m}, with no children".format(m=member)
+            line += " -> {G}".format(G=", ".join([g for g in member.genotypes if member.genotypes[g]]))
             output_lines.append(line)
 
         return "\n".join(output_lines)
@@ -98,19 +160,17 @@ class Asgardian:
         self.has_power = has_power
 
         if has_power:
-            self.genomes = {
+            self.genotypes = {
                     "aa": True,
                     "Aa": False,
                     "AA": False
                     }
         else:
-            self.genomes = {
+            self.genotypes = {
                     "aa": False,
                     "Aa": True,
                     "AA": True
                     }
-
-    # Public methods:
 
     # Special methods:
     def __str__(self):

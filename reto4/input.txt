@@ -3,4 +3,9 @@ Bestla[0]
 Ve[0]=Bor+Bestla
 Odin[1]=Bor+Bestla
 Jord[0]
+Sif[0]
 Thor[1]=Odin+Jord
+Jarnsaxa[0]
+Thrud[0]=Thor+Sif
+Modi[0]=Thor+Sif
+Magni[0]=Thor+Jarnsaxa
