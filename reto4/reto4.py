@@ -83,7 +83,6 @@ class FamilyTree:
         :param member_name: name of parent whose children we seek, as string.
         :return: list of names, as strings.
         """
-
         return [c.name for c in self.children_of(member_name)]
 
     def parents_of(self, member_name):
@@ -105,7 +104,6 @@ class FamilyTree:
         :param member_name: name of offspring whose parents we seek.
         :return: list names, as strings (empty if none found).
         """
-
         return [p.name for p in self.parents_of(member_name)]
 
     def purge_according_to_powerful_offspring(self):
@@ -118,12 +116,13 @@ class FamilyTree:
                     break
 
     def purge_according_to_powerful_parent(self):
-        """Remove AA genotype from offspring whose parents do have the power."""
+        """Remove AA genotype from members one or both of whose parents do have the power."""
 
         for name, member in self.members.items():
             for parent in self.parents_of(name):
                 if parent.has_power:
                     member.genotypes["AA"] = False
+                    break
 
     # Special methods:
     def __str__(self):
@@ -140,7 +139,7 @@ class FamilyTree:
         return "\n".join(output_lines)
 
 class FamilyRelationship:
-    """Family relationship (parent-offsprint) between two Asgardians."""
+    """Family relationship (parent-offspring) between two Asgardians (i.e., graph edge)."""
 
     # Constructor:
     def __init__(self, parent, offspring):
@@ -152,7 +151,7 @@ class FamilyRelationship:
         return "{s.parent} is the parent of {s.offspring}".format(s=self)
 
 class Asgardian:
-    """A member of the FamilyTree."""
+    """A member of the FamilyTree (i.e. graph node)."""
 
     # Constructor:
     def __init__(self, name, has_power):
@@ -160,17 +159,9 @@ class Asgardian:
         self.has_power = has_power
 
         if has_power:
-            self.genotypes = {
-                    "aa": True,
-                    "Aa": False,
-                    "AA": False
-                    }
+            self.genotypes = {"aa": True, "Aa": False, "AA": False}
         else:
-            self.genotypes = {
-                    "aa": False,
-                    "Aa": True,
-                    "AA": True
-                    }
+            self.genotypes = {"aa": False, "Aa": True, "AA": True}
 
     # Special methods:
     def __str__(self):
