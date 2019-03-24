@@ -21,7 +21,7 @@ def main():
     #asgardian_family.print_genotype_probabilities()
 
     for name, member in asgardian_family.members.items():
-        print(asgardian_family.result_of(member))
+        print(asgardian_family.result_of(member.name))
 
 
 def parse_input(input_file=INPUT_FILE):
@@ -178,34 +178,34 @@ class FamilyTree:
 
         return False
 
-    def result_of(self, member):
-        if member.is_already_processed:
-            return member.output_line
+    def result_of(self, member_name):
+        if self.members[member_name].is_already_processed:
+            return self.members[member_name].output_line
 
         # Any Asgardian w/o power, and with a parent w/ power must be genotype Aa.
-        for parent in self.parents_of(member.name):
+        for parent in self.parents_of(self.members[member_name].name):
             if parent.has_power:
-                member.genotype_probabilities = [0, 1, 0]
-                return member.output_line
+                self.members[member_name].genotype_probabilities = [0, 1, 0]
+                return self.members[member_name].output_line
 
         # Any Asgardian w/o power, and with a child w/ power must be genotype Aa.
-        for child in self.children_of(member.name):
+        for child in self.children_of(self.members[member_name].name):
             if child.has_power:
-                member.genotype_probabilities = [0, 1, 0]
-                return member.output_line
+                self.members[member_name].genotype_probabilities = [0, 1, 0]
+                return self.members[member_name].output_line
 
         # Any Asgardian with neither power, nor parents or children with power, has either genotype AA or Aa.
         # If he or she has parents, the probability will depend on genotype probabilities of parents. If not,
         # Then 50/50 is assigned.
-        if not self.has_parents(member.name):
-            member.genotype_probabilities = [0.5, 0.5, 0]
-            return member.output_line
+        if not self.has_parents(member_name):
+            self.members[member_name].genotype_probabilities = [0.5, 0.5, 0]
+            return self.members[member_name].output_line
 
-        print(member.name)
-        for parent in self.parents_of(member.name):
+        print(member_name)
+        for parent in self.parents_of(member_name):
             print(parent)
 
-        return member, "---- TODO ----"
+        return self.members[member_name], "---- TODO ----"
 
     # Special methods:
     def __str__(self):
