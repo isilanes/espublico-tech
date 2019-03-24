@@ -196,7 +196,7 @@ class FamilyTree:
 
         # Any Asgardian with neither power, nor parents or children with power, has either genotype AA or Aa.
         # If he or she has parents, the probability will depend on genotype probabilities of parents. If not,
-        # Then 50/50 is asigned.
+        # Then 50/50 is assigned.
         if not self.has_parents(member.name):
             member.genotype_probabilities = [0.5, 0.5, 0]
             return member.output_line
