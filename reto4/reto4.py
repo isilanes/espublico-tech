@@ -16,13 +16,38 @@ WEIGHTS = {
 # Functions:
 def main():
     asgardian_family = parse_input()
-    asgardian_family.purge_according_to_powerful_offspring()
-    asgardian_family.purge_according_to_powerful_parent()
-    asgardian_family.print_genotype_probabilities()
+    #asgardian_family.purge_according_to_powerful_offspring()
+    #asgardian_family.purge_according_to_powerful_parent()
+    #asgardian_family.print_genotype_probabilities()
 
     for name, member in asgardian_family.members.items():
-        if member.is_already_processed:
-            pass
+        print(result_of(asgardian_family, member))
+
+
+def result_of(family, member):
+    if member.is_already_processed:
+        return member.output_line
+
+    # Any Asgardian w/o power, and with a parent w/ power must be genotype Aa.
+    for parent in family.parents_of(member.name):
+        if parent.has_power:
+            member.genotype_probabilities = [0, 1, 0]
+            return member.output_line
+
+    # Any Asgardian w/o power, and with a child w/ power must be genotype Aa.
+    for child in family.children_of(member.name):
+        if child.has_power:
+            member.genotype_probabilities = [0, 1, 0]
+            return member.output_line
+
+    # Any Asgardian with neither power, nor parents or children with power, has either genotype AA or Aa.
+    # If he or she has parents, the probability will depend on genotype probabilities of parents. If not,
+    # Then 50/50 is asigned.
+    if not family.has_parents(member.name):
+        member.genotype_probabilities = [0.5, 0.5, 0]
+        return member.output_line
+
+    return member, "---- TODO ----"
 
 
 def parse_input(input_file=INPUT_FILE):
@@ -116,39 +141,12 @@ class FamilyTree:
                 if relationship.offspring == member_name:
                     yield parent
 
-    def parent_names_of(self, member_name):
-        """
-        Return list of parents of 'member_name', or empty list if none known.
-
-        :param member_name: name of offspring whose parents we seek.
-        :return: list names, as strings (empty if none found).
-        """
-        return [p.name for p in self.parents_of(member_name)]
-
-    def purge_according_to_powerful_offspring(self):
-        """Remove AA genotype from parents whose children do have the power."""
-
-        for name, member in self.members.items():
-            for child in self.children_of(name):
-                if child.has_power:
-                    member.genotypes["AA"] = False
-                    break
-
-    def purge_according_to_powerful_parent(self):
-        """Remove AA genotype from members one or both of whose parents do have the power."""
-
-        for name, member in self.members.items():
-            for parent in self.parents_of(name):
-                if parent.has_power:
-                    member.genotypes["AA"] = False
-                    break
-
     def print_genotype_probabilities(self):
         """Calculate and print genotype probabilities for each member, based on parents and self."""
 
         for name, member in self.members.items():
             # Powerful Asgardians have 100% probability aa:
-            if member.genotypes["aa"]:
+            if member.genotype == "aa":
                 member.genotype_probabilities = [0, 0, 1]
                 print(member.output_line)
                 continue
@@ -200,6 +198,12 @@ class FamilyTree:
             member.genotype_probabilities = [0.5, 0.5, 0]
             print(member.output_line)
 
+    def has_parents(self, member_name):
+        for _ in self.parents_of(member_name):
+            return True
+
+        return False
+
     # Special methods:
     def __str__(self):
         output_lines = []
@@ -235,14 +239,12 @@ class Asgardian:
     def __init__(self, name, has_power):
         self.name = name
         self.has_power = has_power
-        self.is_already_processed = False
         self.genotype_probabilities = [None, None, None]
 
         if has_power:
-            self.genotypes = {"aa": True, "Aa": False, "AA": False}
-            self.is_already_processed = True
+            self.genotype_probabilities = [0, 0, 1]
         else:
-            self.genotypes = {"aa": False, "Aa": True, "AA": True}
+            self.genotype_probabilities = [None, None, 0]
 
     # Public properties:
     @property
@@ -252,6 +254,12 @@ class Asgardian:
         AA, Aa, aa = self.genotype_probabilities
 
         return "{s.name}=AA[{AA}],Aa[{Aa}],aa[{aa}]".format(s=self, AA=AA, Aa=Aa, aa=aa)
+
+    @property
+    def is_already_processed(self):
+        """Whether genotype probabilities have been already calculated or not."""
+
+        return None not in self.genotype_probabilities
 
     # Special methods:
     def __str__(self):
