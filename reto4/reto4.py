@@ -20,6 +20,11 @@ def main():
     asgardian_family.purge_according_to_powerful_parent()
     asgardian_family.print_genotype_probabilities()
 
+    for name, member in asgardian_family.members.items():
+        if member.is_already_processed:
+            pass
+
+
 def parse_input(input_file=INPUT_FILE):
     """
     Parse input file 'input_file' and return list of Asgardians.
@@ -58,17 +63,6 @@ def parse_input(input_file=INPUT_FILE):
 
     return family
 
-def print_output_line(name, probs):
-    """
-    Print a line formatted as requested, for the Asgardian named 'name' and with genotype
-    probabilities 'probs'.
-
-    :param name: name of Asgardian, as string.
-    :param probs: list or tuple of probabilities, as floats, for AA, Aa and aa genotypes, in THAT order.
-    :return: nothing, it prints to the screen.
-    """
-    msg = "{n}=AA[{p[0]}],Aa[{p[1]}],aa[{p[2]}]".format(n=name, p=probs)
-    print(msg)
 
 # Classes:
 class FamilyTree:
@@ -155,16 +149,19 @@ class FamilyTree:
         for name, member in self.members.items():
             # Powerful Asgardians have 100% probability aa:
             if member.genotypes["aa"]:
-                print_output_line(name, (0, 0, 1))
+                member.genotype_probabilities = [0, 0, 1]
+                print(member.output_line)
                 continue
 
             # Asgardians who have only one of AA and Aa:
             if member.genotypes["Aa"] and not member.genotypes["AA"]:
-                print_output_line(name, (0, 1, 0))
+                member.genotype_probabilities = [0, 1, 0]
+                print(member.output_line)
                 continue
 
             if member.genotypes["AA"] and not member.genotypes["Aa"]:
-                print_output_line(name, (1, 0, 0))
+                member.genotype_probabilities = [1, 0, 0]
+                print(member.output_line)
                 continue
 
             # Asgardians who have both AA and Aa, depend on genotype of parents:
@@ -195,11 +192,13 @@ class FamilyTree:
                 accumulated[0] /= len(firsts)*len(seconds)
                 accumulated[1] /= len(firsts)*len(seconds)
                 accumulated[2] /= len(firsts)*len(seconds)
-                print_output_line(name, accumulated)
+                member.genotype_probabilities = accumulated
+                print(member.output_line)
                 continue
 
             # Asgardians with no parents are given 50/50 probability for AA/Aa:
-            print_output_line(name, (0.5, 0.5, 0))
+            member.genotype_probabilities = [0.5, 0.5, 0]
+            print(member.output_line)
 
     # Special methods:
     def __str__(self):
@@ -215,6 +214,7 @@ class FamilyTree:
 
         return "\n".join(output_lines)
 
+
 class FamilyRelationship:
     """Family relationship (parent-offspring) between two Asgardians (i.e., graph edge)."""
 
@@ -227,6 +227,7 @@ class FamilyRelationship:
     def __str__(self):
         return "{s.parent} is the parent of {s.offspring}".format(s=self)
 
+
 class Asgardian:
     """A member of the FamilyTree (i.e. graph node)."""
 
@@ -234,19 +235,30 @@ class Asgardian:
     def __init__(self, name, has_power):
         self.name = name
         self.has_power = has_power
+        self.is_already_processed = False
+        self.genotype_probabilities = [None, None, None]
 
         if has_power:
             self.genotypes = {"aa": True, "Aa": False, "AA": False}
+            self.is_already_processed = True
         else:
             self.genotypes = {"aa": False, "Aa": True, "AA": True}
+
+    # Public properties:
+    @property
+    def output_line(self):
+        """Return formatted output line, with required info and format."""
+
+        AA, Aa, aa = self.genotype_probabilities
+
+        return "{s.name}=AA[{AA}],Aa[{Aa}],aa[{aa}]".format(s=self, AA=AA, Aa=Aa, aa=aa)
 
     # Special methods:
     def __str__(self):
         if self.has_power:
-            return "{s.name}, who has THE POWER".format(s=self)
+            return "{s.name}, who has THE POWAA".format(s=self)
         else:
             return "{s.name}, the powerless".format(s=self)
-
 
 
 # Main:
