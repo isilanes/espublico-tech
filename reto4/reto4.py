@@ -29,7 +29,8 @@ def main():
 
     for name, member in asgardian_family.members.items():
         member.genotype_probabilities = asgardian_family.result_of(member.name)
-        print(member.output_line)
+    
+    print(asgardian_family)
 
 
 def parse_input(input_file=INPUT_FILE):
@@ -37,7 +38,7 @@ def parse_input(input_file=INPUT_FILE):
     Parse input file 'input_file' and return list of Asgardians.
 
     :param input_file: full path of input file, as string
-    :return: FamilyTree object, populated with Asgardian objects
+    :return: FamilyGraph object, populated with Asgardian objects
     """
     family = FamilyGraph()
 
@@ -62,7 +63,7 @@ def parse_input(input_file=INPUT_FILE):
             if post is not None:
                 parents = post.split("+")
 
-            # Add to FamilyTree:
+            # Add to FamilyGraph:
             family.add_member(asgardian)
             for parent in parents:
                 relationship = FamilyRelationship(parent, asgardian.name)
@@ -108,7 +109,7 @@ class FamilyGraph:
         :return: generator of Asgardian objects.
         """
         for relationship in self.relationships[member_name]:
-            yield self.members[relationship.offspring]
+            yield self.members[relationship.child]
 
     def children_names_of(self, member_name):
         """
@@ -123,12 +124,12 @@ class FamilyGraph:
         """
         Return list of parents of 'member_name', or empty list if none known.
 
-        :param member_name: name of offspring whose parents we seek.
+        :param member_name: name of child whose parents we seek.
         :return: generator Asgardian objects (empty if none found).
         """
         for parent_name, parent in self.members.items():
             for relationship in self.relationships[parent_name]:
-                if relationship.offspring == member_name:
+                if relationship.child == member_name:
                     yield parent
 
     def has_parents(self, member_name):
@@ -181,34 +182,24 @@ class FamilyGraph:
 
     # Special methods:
     def __str__(self):
-        output_lines = []
-        for name, member in self.members.items():
-            children = self.children_names_of(name)
-            if children:
-                line = "{m}, parent of {c}".format(m=member, c=", ".join(children))
-            else:
-                line = "{m}, with no children".format(m=member)
-            line += " -> {G}".format(G=", ".join([g for g in member.genotypes if member.genotypes[g]]))
-            output_lines.append(line)
-
-        return "\n".join(output_lines)
-
+        return "\n".join([m.output_line for m in self.members.values()])
+        
 
 class FamilyRelationship:
-    """Family relationship (parent-offspring) between two Asgardians (i.e., graph edge)."""
+    """Family relationship (parent-child) between two Asgardians (i.e., graph edge)."""
 
     # Constructor:
-    def __init__(self, parent, offspring):
+    def __init__(self, parent, child):
         self.parent = parent
-        self.offspring = offspring
+        self.child = child
 
     # Special methods:
     def __str__(self):
-        return "{s.parent} is the parent of {s.offspring}".format(s=self)
+        return "{s.parent} is the parent of {s.child}".format(s=self)
 
 
 class Asgardian:
-    """A member of the FamilyTree (i.e. graph node)."""
+    """A member of the FamilyGraph (i.e. graph node)."""
 
     # Constructor:
     def __init__(self, name, has_power):
