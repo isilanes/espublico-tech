@@ -54,6 +54,17 @@ se ha desarrollado con solo Python 3.x en mente.
 El uso de numpy obedece únicamente a un interés por la sencillez y la comodidad, no a la eficiencia. Considero numpy
 suficiente ubicuo como para no verme impulsado a prescindir de él en aras de la compatibilidad.
 
+## Tests
+
+Hay varios tests en la carpeta `tests`, que pueden ejecutarse desde la línea de comando en el directorio raíz:
+
+```bash
+$ bash tests/test.sh
+```
+
+No son tests unitarios, sino más bien tests de aceptación. Compruebo que para inputs conocidos el programa produzca 
+el output correspondiente.
+
 ## Funcionamiento y algoritmo
 
 Las relaciones entre familiares asgardianos se han modelado con un grafo dirigido, en el que cada nodo es un

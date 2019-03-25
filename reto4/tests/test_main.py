@@ -39,7 +39,7 @@ class TestReto4(unittest.TestCase):
         for name, expected in expected_probabilities.items():
             calculated = family.members[name].genotype_probabilities
             diff = sum(abs(calculated - expected))
-            self.assertAlmostEqual(diff, 0, 6)
+            self.assertAlmostEqual(diff, 0, 6, "{n} fails with {c}".format(n=name, c=calculated))
 
     def test_case_02(self):
         family = reto4.build_family_from_input("tests/input_02.txt")
@@ -59,7 +59,7 @@ class TestReto4(unittest.TestCase):
         for name, expected in expected_probabilities.items():
             calculated = family.members[name].genotype_probabilities
             diff = sum(abs(calculated - expected))
-            self.assertAlmostEqual(diff, 0, 6, f"{name} fails")
+            self.assertAlmostEqual(diff, 0, 6, "{n} fails with {c}".format(n=name, c=calculated))
 
     def test_case_03(self):
         family = reto4.build_family_from_input("tests/input_03.txt")
@@ -81,5 +81,5 @@ class TestReto4(unittest.TestCase):
         for name, expected in expected_probabilities.items():
             calculated = family.members[name].genotype_probabilities
             diff = sum(abs(calculated - expected))
-            self.assertAlmostEqual(diff, 0, 6, f"{name} fails with {calculated}")
+            self.assertAlmostEqual(diff, 0, 6, "{n} fails with {c}".format(n=name, c=calculated))
 
