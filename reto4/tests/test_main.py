@@ -19,7 +19,7 @@ class TestReto4(unittest.TestCase):
 
     # Test cases:
     def test_case_01(self):
-        family = reto4.get_family_from_input("tests/input_01.txt")
+        family = reto4.build_family_from_input("tests/input_01.txt")
         family.calculate_genotype_probabilities()
         
         expected_probabilities = {
@@ -42,7 +42,7 @@ class TestReto4(unittest.TestCase):
             self.assertAlmostEqual(diff, 0, 6)
 
     def test_case_02(self):
-        family = reto4.get_family_from_input("tests/input_02.txt")
+        family = reto4.build_family_from_input("tests/input_02.txt")
         family.calculate_genotype_probabilities()
     
         expected_probabilities = {
@@ -62,7 +62,7 @@ class TestReto4(unittest.TestCase):
             self.assertAlmostEqual(diff, 0, 6, f"{name} fails")
 
     def test_case_03(self):
-        family = reto4.get_family_from_input("tests/input_03.txt")
+        family = reto4.build_family_from_input("tests/input_03.txt")
         family.calculate_genotype_probabilities()
     
         expected_probabilities = {

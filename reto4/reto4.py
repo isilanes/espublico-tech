@@ -7,8 +7,16 @@ Desde la línea de comandos (en Linux), ejecutar:
 
 $ python3 reto4.py
 
-El script espera un fichero de input en el mismo directorio, llamado literalmente "input.txt",
-y con el siguiente formato:
+El script espera un fichero de input en el mismo directorio, llamado literalmente "input.txt". Si se desea
+leer otro fichero de input, puede usarse la opción -i:
+
+$ python3 reto4.py -i another_input.txt
+
+Para mostrar una breve ayuda con todas las opciones disponibles:
+
+$ python reto4.py -h
+
+El fichero de entrada debe tener el siguiente formato:
 
 Bor[0]
 Bestla[0]
@@ -72,6 +80,8 @@ de tener cada genotipo:
 * El código (nombres de variables, funciones y clases), y los comentarios están en inglés. Lo primero lo considero
   innegociable. Los comentarios, por otro lado, podrían haber ido en castellano, dado el ámbito del reto, pero he
   cedido a lo que en general considero buena práctica, que es utilizar siempre el inglés.
+
+* El script se ha desarrollado en GitHub: https://github.com/isilanes/espublico-tech/tree/master/reto4
 """
 
 __author__ = "Iñaki Silanes Cristóbal"
@@ -79,6 +89,8 @@ __copyright__ = "Copyright 2019, Iñaki Silanes Cristóbal"
 __email__ = "isilanes@gmail.com"
 
 # Standard libs:
+import sys
+import argparse
 import numpy as np
 
 
@@ -112,14 +124,15 @@ WEIGHTS = np.array([
 
 # Functions:
 def main():
-    asgardian_family = get_family_from_input()
+    opts = parse_arguments()
+    asgardian_family = build_family_from_input(input_file=opts.input)
     asgardian_family.calculate_genotype_probabilities()
     print(asgardian_family)
 
 
-def get_family_from_input(input_file=INPUT_FILE):
+def build_family_from_input(input_file):
     """
-    Parse input file 'input_file' and return list of Asgardians.
+    Parse input file 'input_file' and return family of Asgardians.
 
     :param input_file: full path of input file, as string
     :return: FamilyGraph object, populated with Asgardian objects
@@ -128,7 +141,6 @@ def get_family_from_input(input_file=INPUT_FILE):
 
     with open(input_file) as f:
         for line in f:
-
             # Parse line:
             pre, post = None, None
             line = line.strip()
@@ -156,6 +168,18 @@ def get_family_from_input(input_file=INPUT_FILE):
     return family
 
 
+def parse_arguments(args=sys.argv[1:]):
+    """Parse command-line arguments, if any."""
+    
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument('-i', '--input',
+                        help="Path of input file to read. Default: {d}".format(d=INPUT_FILE),
+                        default=INPUT_FILE)
+    
+    return parser.parse_args(args)
+
+
 # Classes:
 class FamilyGraph:
     """A directed graph representing an Asgardian family."""
@@ -178,7 +202,7 @@ class FamilyGraph:
 
     def add_relationship(self, relationship):
         """
-        Add a relationship object to family graph.
+        Add a relationship to family graph.
         
         :param relationship: a relationship between two members, as a Relationship object
         :return: None
@@ -209,7 +233,7 @@ class FamilyGraph:
         Return list of parents of 'member_name', or empty list if none known.
 
         :param member_name: name of child whose parents we seek.
-        :return: generator Asgardian objects (empty if none found).
+        :return: generator of Asgardian objects.
         """
         for parent_name, parent in self.members.items():
             for relationship in self.relationships[parent_name]:
@@ -223,27 +247,25 @@ class FamilyGraph:
         return False
 
     def genotype_probabilities_of(self, member_name):
+        """
+        Return probabilities of AA, Aa and aa genotypes for member named 'member_name'.
+        
+        :param member_name: name of Asgardian whose probabilities we seek, as string
+        :return: numpy array (pAA, pAa, paa), with probabilities for AA, Aa and aa, respectively
+        """
+        # For members already calculated (including the ones with power, who automatically have an aa genotype):
         if self.members[member_name].is_already_processed:
             return self.members[member_name].genotype_probabilities
 
-        # Any Asgardian w/o power, and with a parent w/ power must be genotype Aa.
-        for parent in self.parents_of(self.members[member_name].name):
-            if parent.has_power:
-                self.members[member_name].genotype_probabilities = [0, 1, 0]
-                return self.members[member_name].genotype_probabilities
-
-        # Any Asgardian w/o power, and with a child w/ power must be genotype Aa.
-        for child in self.children_of(self.members[member_name].name):
-            if child.has_power:
-                self.members[member_name].genotype_probabilities = [0, 1, 0]
-                return self.members[member_name].genotype_probabilities
+        # Any Asgardian w/o power, and with a parent OR child w/ power, must be genotype Aa.
+        if self.any_parent_has_power(member_name) or self.any_child_has_power(member_name):
+            return np.array([0, 1, 0])
 
         # Any Asgardian with neither power, nor parents or children with power, has either genotype AA or Aa.
         # If he or she has parents, the probability will depend on genotype probabilities of parents.
         # If not, then 50/50 is assigned.
         if not self.has_parents(member_name):
-            self.members[member_name].genotype_probabilities = [0.5, 0.5, 0]
-            return self.members[member_name].genotype_probabilities
+            return np.array([0.5, 0.5, 0])
 
         parent_genotypes = []
         for parent in self.parents_of(member_name):
@@ -253,8 +275,8 @@ class FamilyGraph:
         for i in range(3):
             for j in range(3):
                 p = parent_genotypes[0][i]*parent_genotypes[1][j]
-                v = WEIGHTS[i, j]
-                probs += p*v
+                w = WEIGHTS[i, j]
+                probs += p * w
         
         # Since we don't have the power, probability of aa is 0:
         probs[2] = 0
@@ -273,6 +295,32 @@ class FamilyGraph:
         """
         for name, member in self.members.items():
             member.genotype_probabilities = self.genotype_probabilities_of(name)
+            
+    def any_parent_has_power(self, member_name):
+        """
+        Return True if 'member_name' has one or both parents with the power, False otherwise.
+        
+        :param member_name: name of Asgardians whose parents we inquire about, as string.
+        :return: boolean.
+        """
+        for parent in self.parents_of(member_name):
+            if parent.has_power:
+                return True
+        
+        return False
+    
+    def any_child_has_power(self, member_name):
+        """
+        Return True if 'member_name' has one or more children with the power, False otherwise.
+        
+        :param member_name: name of Asgardians whose children we inquire about, as string.
+        :return: boolean.
+        """
+        for child in self.children_of(member_name):
+            if child.has_power:
+                return True
+    
+        return False
 
     # Special methods:
     def __str__(self):
@@ -323,7 +371,7 @@ class Asgardian:
     # Special methods:
     def __str__(self):
         if self.has_power:
-            return "{s.name}, who has THE POWAA".format(s=self)
+            return "{s.name}, who has the power".format(s=self)
         else:
             return "{s.name}, the powerless".format(s=self)
 
