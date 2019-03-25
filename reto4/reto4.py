@@ -1,27 +1,35 @@
+# Standard libs:
+import numpy as np
+
+
 # Globals:
 INPUT_FILE = "input.txt"
-WEIGHTS = {
-    "AAAA": {"AA": 1.0},
-    "AAAa": {"AA": 0.5, "Aa": 0.5},
-    "AaAA": {"AA": 0.5, "Aa": 0.5},
-    "aaAA": {"Aa": 1.0},
-    "AAaa": {"Aa": 1.0},
-    "AaAa": {"AA": 0.25, "Aa": 0.5, "aa": 0.25},
-    "Aaaa": {"Aa": 0.5, "aa": 0.5},
-    "aaAa": {"Aa": 0.5, "aa": 0.5},
-    "aaaa": {"aa": 1.0},
-}
+WEIGHTS = np.array([
+    [
+        [1, 0, 0],
+        [0.5, 0.5, 0],
+        [0, 1, 0]
+    ],
+    [
+        [0.5, 0.5, 0],
+        [0.25, 0.5, 0.25],
+        [0, 0.5, 0.5]
+    ],
+    [
+        [0, 1, 0],
+        [0, 0.5, 0.5],
+        [0, 0, 1]
+    ],
+])
 
 
 # Functions:
 def main():
     asgardian_family = parse_input()
-    #asgardian_family.purge_according_to_powerful_offspring()
-    #asgardian_family.purge_according_to_powerful_parent()
-    #asgardian_family.print_genotype_probabilities()
 
     for name, member in asgardian_family.members.items():
-        print(asgardian_family.result_of(member.name))
+        member.genotype_probabilities = asgardian_family.result_of(member.name)
+        print(member.output_line)
 
 
 def parse_input(input_file=INPUT_FILE):
@@ -31,7 +39,7 @@ def parse_input(input_file=INPUT_FILE):
     :param input_file: full path of input file, as string
     :return: FamilyTree object, populated with Asgardian objects
     """
-    family = FamilyTree()
+    family = FamilyGraph()
 
     with open(input_file) as f:
         for line in f:
@@ -64,7 +72,7 @@ def parse_input(input_file=INPUT_FILE):
 
 
 # Classes:
-class FamilyTree:
+class FamilyGraph:
     """A directed graph of the family."""
 
     # Constructor:
@@ -74,14 +82,22 @@ class FamilyTree:
 
     # Public methods:
     def add_member(self, member):
-        """Add an Asgardian object to FamilyTree."""
-
+        """
+        Add a member to family graph.
+        
+        :param member: family member to add, as Asgardian object
+        :return: None
+        """
         self.members[member.name] = member
         self.relationships[member.name] = []
 
     def add_relationship(self, relationship):
-        """Add a FamilyRelationship object to FamilyTree."""
-
+        """
+        Add a relationship object to family graph.
+        
+        :param relationship: a relationship between two members, as a Relationship object
+        :return: None
+        """
         self.relationships[relationship.parent].append(relationship)
 
     def children_of(self, member_name):
@@ -115,63 +131,6 @@ class FamilyTree:
                 if relationship.offspring == member_name:
                     yield parent
 
-    def print_genotype_probabilities(self):
-        """Calculate and print genotype probabilities for each member, based on parents and self."""
-
-        for name, member in self.members.items():
-            # Powerful Asgardians have 100% probability aa:
-            if member.genotype == "aa":
-                member.genotype_probabilities = [0, 0, 1]
-                print(member.output_line)
-                continue
-
-            # Asgardians who have only one of AA and Aa:
-            if member.genotypes["Aa"] and not member.genotypes["AA"]:
-                member.genotype_probabilities = [0, 1, 0]
-                print(member.output_line)
-                continue
-
-            if member.genotypes["AA"] and not member.genotypes["Aa"]:
-                member.genotype_probabilities = [1, 0, 0]
-                print(member.output_line)
-                continue
-
-            # Asgardians who have both AA and Aa, depend on genotype of parents:
-            possibilities = []
-            for parent in self.parents_of(name):
-                genotypes = [g for g in ["AA", "Aa", "aa"] if parent.genotypes[g]]
-                possibilities.append(genotypes)
-
-            # Combinations only generated if parents exist above:
-            if possibilities:
-                accumulated = [0, 0, 0]
-                firsts, seconds = possibilities
-                for first in firsts:
-                    for second in seconds:
-                        combo = first+second
-                        w = WEIGHTS[combo]
-                        for g in w:
-                            if not member.genotypes[g]:
-                                w[g] = 0
-                        norm = sum([x for x in w.values()])
-                        if norm:
-                            for k in w:
-                                w[k] /= norm
-                            accumulated[0] += w.get("AA", 0)
-                            accumulated[1] += w.get("Aa", 0)
-                            accumulated[2] += w.get("aa", 0)
-
-                accumulated[0] /= len(firsts)*len(seconds)
-                accumulated[1] /= len(firsts)*len(seconds)
-                accumulated[2] /= len(firsts)*len(seconds)
-                member.genotype_probabilities = accumulated
-                print(member.output_line)
-                continue
-
-            # Asgardians with no parents are given 50/50 probability for AA/Aa:
-            member.genotype_probabilities = [0.5, 0.5, 0]
-            print(member.output_line)
-
     def has_parents(self, member_name):
         for _ in self.parents_of(member_name):
             return True
@@ -180,32 +139,45 @@ class FamilyTree:
 
     def result_of(self, member_name):
         if self.members[member_name].is_already_processed:
-            return self.members[member_name].output_line
+            return self.members[member_name].genotype_probabilities
 
         # Any Asgardian w/o power, and with a parent w/ power must be genotype Aa.
         for parent in self.parents_of(self.members[member_name].name):
             if parent.has_power:
                 self.members[member_name].genotype_probabilities = [0, 1, 0]
-                return self.members[member_name].output_line
+                return self.members[member_name].genotype_probabilities
 
         # Any Asgardian w/o power, and with a child w/ power must be genotype Aa.
         for child in self.children_of(self.members[member_name].name):
             if child.has_power:
                 self.members[member_name].genotype_probabilities = [0, 1, 0]
-                return self.members[member_name].output_line
+                return self.members[member_name].genotype_probabilities
 
         # Any Asgardian with neither power, nor parents or children with power, has either genotype AA or Aa.
-        # If he or she has parents, the probability will depend on genotype probabilities of parents. If not,
-        # Then 50/50 is assigned.
+        # If he or she has parents, the probability will depend on genotype probabilities of parents.
+        # If not, then 50/50 is assigned.
         if not self.has_parents(member_name):
             self.members[member_name].genotype_probabilities = [0.5, 0.5, 0]
-            return self.members[member_name].output_line
+            return self.members[member_name].genotype_probabilities
 
-        print(member_name)
+        parent_genotypes = []
         for parent in self.parents_of(member_name):
-            print(parent)
-
-        return self.members[member_name], "---- TODO ----"
+            parent_genotypes.append(self.result_of(parent.name))
+            
+        probs = np.zeros((3,))
+        for i in range(3):
+            for j in range(3):
+                p = parent_genotypes[0][i]*parent_genotypes[1][j]
+                v = WEIGHTS[i, j]
+                probs += p*v
+        
+        # Since we don't have the power, probability of aa is 0:
+        probs[2] = 0
+        
+        # Renormalize:
+        probs /= sum(probs)
+        
+        return probs
 
     # Special methods:
     def __str__(self):
@@ -242,12 +214,10 @@ class Asgardian:
     def __init__(self, name, has_power):
         self.name = name
         self.has_power = has_power
-        self.genotype_probabilities = [None, None, None]
+        self.genotype_probabilities = None
 
         if has_power:
-            self.genotype_probabilities = [0, 0, 1]
-        else:
-            self.genotype_probabilities = [None, None, 0]
+            self.genotype_probabilities = np.array([0, 0, 1])
 
     # Public properties:
     @property
@@ -262,7 +232,7 @@ class Asgardian:
     def is_already_processed(self):
         """Whether genotype probabilities have been already calculated or not."""
 
-        return None not in self.genotype_probabilities
+        return self.genotype_probabilities is not None
 
     # Special methods:
     def __str__(self):
