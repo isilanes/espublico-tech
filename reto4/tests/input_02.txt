@@ -1,0 +1,8 @@
+Bor[0]
+Bestla[1]
+Ve[0]=Bor+Bestla
+Odin[1]=Bor+Bestla
+Jord[1]
+Thor[1]=Odin+Jord
+Jarnsaxa[0]
+Magni[0]=Thor+Jarnsaxa
