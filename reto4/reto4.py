@@ -26,9 +26,7 @@ WEIGHTS = np.array([
 # Functions:
 def main():
     asgardian_family = parse_input()
-
-    for name, member in asgardian_family.members.items():
-        member.genotype_probabilities = asgardian_family.result_of(member.name)
+    asgardian_family.calculate_genotype_probabilities()
     
     print(asgardian_family)
 
@@ -138,7 +136,7 @@ class FamilyGraph:
 
         return False
 
-    def result_of(self, member_name):
+    def genotype_probabilities_of(self, member_name):
         if self.members[member_name].is_already_processed:
             return self.members[member_name].genotype_probabilities
 
@@ -163,7 +161,7 @@ class FamilyGraph:
 
         parent_genotypes = []
         for parent in self.parents_of(member_name):
-            parent_genotypes.append(self.result_of(parent.name))
+            parent_genotypes.append(self.genotype_probabilities_of(parent.name))
             
         probs = np.zeros((3,))
         for i in range(3):
@@ -179,6 +177,16 @@ class FamilyGraph:
         probs /= sum(probs)
         
         return probs
+    
+    def calculate_genotype_probabilities(self):
+        """
+        Process members one by one (and, implicitly, recursively), to calculate their
+        genotype probabilities.
+        
+        :return: None
+        """
+        for name, member in self.members.items():
+            member.genotype_probabilities = self.genotype_probabilities_of(name)
 
     # Special methods:
     def __str__(self):
@@ -214,10 +222,11 @@ class Asgardian:
     @property
     def output_line(self):
         """Return formatted output line, with required info and format."""
+        
+        if self.genotype_probabilities is None:
+            return "{s.name}=None".format(s=self)
 
-        AA, Aa, aa = self.genotype_probabilities
-
-        return "{s.name}=AA[{AA}],Aa[{Aa}],aa[{aa}]".format(s=self, AA=AA, Aa=Aa, aa=aa)
+        return "{0}=AA[{1}],Aa[{2}],aa[{3}]".format(self.name, *self.genotype_probabilities)
 
     @property
     def is_already_processed(self):

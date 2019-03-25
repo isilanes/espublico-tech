@@ -2,7 +2,7 @@
 import unittest
 
 # Our libs:
-#import reto4
+import reto4
 
 
 # Classes:
@@ -17,6 +17,6 @@ class TestReto4(unittest.TestCase):
         pass
 
     # Test cases:
-    def test_cases(self):
-        pass
+    def test_case_01(self):
+        family = reto4.parse_input("tests/input_01.txt")
 
