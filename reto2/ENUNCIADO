@@ -1,0 +1,21 @@
+Necesitamos tu ayuda
+
+El almirante Ackbar al mando de la nave Hogar Uno ha recibido un mensaje cifrado en castellano estelar desde la luna de Endor. Este mensaje que los humanos saben leer fácilmente resulta imposible de leer para un Mon Calamari sin la ayuda de un androide traductor. Durante el anterior ataque imperial, el módulo de traducción del androide sufrió daños y es necesario recompilar algunos módulos. Para construir el programa de traducción uno de sus tripulantes recuerda algunas traducciones de la última vez que vino un castellano aragonés por la nave.
+
+Estas son algunas palabras que decía con asiduidad:
+
+
+Catellano estelar             Mon calamariano
+2[a]                          aa
+1[h2[ol2[a]]]                 holaaolaa
+2[ad1[io1[s]]]                adiosadios
+2[c1[u2[i2[d2[a2[d2[o]]]]]]]  cuidadoodooadoodoodadoodooadoodooidadoodooadoodoodadoodooadoodoocuidadoodooadoodoodadoodooadoodooidadoodooadoodoodadoodooadoodoo
+
+Es necesario por el bien de la tripulación de la nave que se recompile el módulo de traducción. Para ello sería necesario crear cierto código que transforme el castellano estelar en Mon calamariano.
+
+Tu solución deberá ser un script o aplicación de consola que reciba como parámetro de entrada el texto a traducir, y devuelva como salida el texto traducido. Puedes enviarla en los siguientes lenguajes de programación:
+
+* Java
+* .NET (C#, VB.NET)
+* Javascript
+* Python
